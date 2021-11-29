@@ -1,6 +1,11 @@
 defmodule VideoRoomWeb.Endpoint do
   use Phoenix.Endpoint, otp_app: :membrane_videoroom_demo
 
+  socket("/socket", VideoRoomWeb.UserSocket,
+    websocket: true,
+    longpoll: false
+  )
+
   plug(Plug.Static,
     at: "/",
     from: :membrane_videoroom_demo,
