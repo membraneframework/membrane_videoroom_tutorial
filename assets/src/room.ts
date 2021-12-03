@@ -35,7 +35,9 @@ export class Room {
     this.isMuted = false;
     this.socket = new Socket("/socket");
     this.socket.connect();
-    this.displayName = this.parseUrl();
+    const { display_name: displayName } = parse(document.location.search);
+    this.displayName = displayName as string;
+    window.history.replaceState(null, "", window.location.pathname);
     this.webrtcChannel = this.socket.channel(`room:${getRoomId()}`);
 
     this.webrtcSocketRefs.push(this.socket.onError(this.leave));
@@ -134,15 +136,6 @@ export class Room {
     while (this.webrtcSocketRefs.length > 0) {
       this.webrtcSocketRefs.pop();
     }
-  };
-
-  private parseUrl = (): string => {
-    const { display_name: displayName } = parse(document.location.search);
-
-    // remove query params without reloading the page
-    window.history.replaceState(null, "", window.location.pathname);
-
-    return displayName as string;
   };
 
   private updateParticipantsList = (): void => {
