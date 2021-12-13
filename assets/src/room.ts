@@ -7,28 +7,23 @@ import {
     setParticipantsList,
     attachStream,
     setupDisconnectButton,
-
  } from "./room_ui";
-
  import {
     MembraneWebRTC,
     Peer,
     SerializedMediaEvent,
  } from "membrane_rtc_engine";
-
  import { Push, Socket } from "phoenix";
  import { parse } from "query-string";
-
  export class Room {
+    private peers: Peer[] = [];
+    private displayName: string;
+    private localStream: MediaStream | undefined;
+    private webrtc: MembraneWebRTC;
+
     private socket;
     private webrtcSocketRefs: string[] = [];
     private webrtcChannel;
-    private webrtc: MembraneWebRTC;
-    private peers: Peer[] = [];
-    private localStream: MediaStream | undefined;
-
-     
-
 
     constructor(){
       this.socket = new Socket("/socket");
@@ -37,10 +32,9 @@ import {
       this.displayName = displayName as string;
       window.history.replaceState(null, "", window.location.pathname);
       this.webrtcChannel = this.socket.channel(`room:${getRoomId()}`);
-      const socketErrorCallbackRef = this.socket.onError(this.leave);
-      const socketClosedCallbackRef = this.socket.onClose(this.leave);
-      this.webrtcSocketRefs.push(socketErrorCallbackRef);
-      this.webrtcSocketRefs.push(socketClosedCallbackRef);
+
+      this.webrtcSocketRefs.push(this.socket.onError(this.leave));
+      this.webrtcSocketRefs.push(this.socket.onClose(this.leave));
 
       this.webrtcChannel.on("mediaEvent", (event) =>
       this.webrtc.receiveMediaEvent(event.data)
@@ -50,9 +44,7 @@ import {
             onSendMediaEvent: (mediaEvent: SerializedMediaEvent) => {
                 this.webrtcChannel.push("mediaEvent", { data: mediaEvent });
              },
-            
             onConnectionError: setErrorMessage,
-
             onJoinSuccess: (peerId, peersInRoom) => {
                 this.localStream!.getTracks().forEach((track) =>
                     this.webrtc.addTrack(track, this.localStream!)
@@ -64,31 +56,24 @@ import {
                 });
                 this.updateParticipantsList();
              },
-
              onJoinError: (metadata) => {
                 throw `Peer denied.`;
              },
-             
              onTrackReady: ({ stream, peer, metadata }) => {
                 attachStream(stream!, peer.id);
              },
-
              onTrackAdded: (ctx) => {},
-
              onTrackRemoved: (ctx) => {},
-
              onPeerJoined: (peer) => {
                 this.peers.push(peer);
                 this.updateParticipantsList();
                 addVideoElement(peer.id, peer.metadata.displayName, false);
              },
-
              onPeerLeft: (peer) => {
                 this.peers = this.peers.filter((p) => p.id !== peer.id);
                 removeVideoElement(peer.id);
                 this.updateParticipantsList();
              },
-
              onPeerUpdated: (ctx) => {},
           },
         
@@ -100,7 +85,6 @@ import {
     
     }
 
-    
     private init = async () => {
         try {
             this.localStream = await navigator.mediaDevices.getUserMedia(
@@ -120,18 +104,13 @@ import {
         await this.phoenixChannelPushResult(this.webrtcChannel.join());
      };
  
-    public join = async () => {
-        try {
-            await this.init();
-            setupDisconnectButton(() => {
-                this.leave();
-                window.location.replace("");
-            });
-            this.webrtc.join({ displayName: this.displayName });
-        } catch (error) {
-            console.error("Error while joining to the room:", error);
-        }
-     };
+     public join = () => {
+        setupDisconnectButton(() => {
+          this.leave();
+          window.location.replace("");
+        });
+        this.webrtc.join({ displayName: this.displayName });
+      };
  
      private leave = () => {
         this.webrtc.leave();
@@ -140,15 +119,15 @@ import {
         this.webrtcSocketRefs = [];
      };
  
-    private updateParticipantsList = (): void => {
+     private updateParticipantsList = (): void => {
         const participantsNames = this.peers.map((p) => p.metadata.displayName);
-     
+    
         if (this.displayName) {
-            participantsNames.push(this.displayName);
+          participantsNames.push(this.displayName);
         }
-     
+    
         setParticipantsList(participantsNames);
-     };
+      };
  
      private phoenixChannelPushResult = async (push: Push): Promise<any> => {
         return new Promise((resolve, reject) => {
