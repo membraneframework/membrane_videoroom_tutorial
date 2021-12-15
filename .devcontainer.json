@@ -1,0 +1,4 @@
+{
+    "image": "membraneframeworklabs/docker_membrane",
+    "forwardPorts": [4000],
+}
