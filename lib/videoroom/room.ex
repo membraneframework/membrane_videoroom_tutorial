@@ -8,6 +8,8 @@ defmodule Videoroom.Room do
   alias Membrane.RTC.Engine.Endpoint.WebRTC
   require Membrane.Logger
 
+  @mix_env Mix.env()
+
   def start(init_arg, opts) do
     GenServer.start(__MODULE__, init_arg, opts)
   end
