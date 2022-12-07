@@ -7,7 +7,7 @@ defmodule ConfigParser do
     else
       _ ->
         raise("""
-        Bad EXTERNAL_IP format. Expected IPv4, got: \
+        Bad IP address format. Expected IPv4, got: \
         #{inspect(ip)}
         """)
     end
@@ -21,8 +21,8 @@ defmodule ConfigParser do
     else
       _else ->
         raise("""
-        Bad PORT_RANGE enviroment variable value. Expected "from-to", where `from` and `to` \
-        are numbers between 0 and 65535 and `from` is not bigger than `to`, got: \
+        Error when parsing a port range. Expected "from-to" format, where `from` and `to` \
+        are integers between 0 and 65535 and `from` is not bigger than `to`, got: \
         #{inspect(range)}
         """)
     end
