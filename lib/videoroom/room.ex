@@ -8,6 +8,8 @@ defmodule Videoroom.Room do
   alias Membrane.RTC.Engine.Endpoint.WebRTC
   require Membrane.Logger
 
+  @mix_env Mix.env()
+
   def start(init_arg, opts) do
     GenServer.start(__MODULE__, init_arg, opts)
   end
@@ -24,11 +26,18 @@ defmodule Videoroom.Room do
       id: room_id
     ]
 
+    mock_ip = Application.fetch_env!(:membrane_videoroom_demo, :external_ip)
+    external_ip = if @mix_env == :prod or System.get_env("RUNNING_IN_DOCKER", "0") == "1", do: {0, 0, 0, 0}, else: mock_ip
+    ports_range = Application.fetch_env!(:membrane_videoroom_demo, :port_range)
+
+    integrated_turn_options = [
+      ip: external_ip,
+      mock_ip: mock_ip,
+      ports_range: ports_range
+    ]
+
     network_options = [
-      stun_servers: [
-        %{server_addr: "stun.l.google.com", server_port: 19_302}
-      ],
-      turn_servers: [],
+      integrated_turn_options: integrated_turn_options,
       dtls_pkey: Application.get_env(:membrane_videoroom_demo, :dtls_pkey),
       dtls_cert: Application.get_env(:membrane_videoroom_demo, :dtls_cert)
     ]
@@ -86,11 +95,11 @@ defmodule Videoroom.Room do
       end
 
     endpoint = %WebRTC{
+      rtc_engine: rtc_engine,
       ice_name: peer.id,
       extensions: %{},
       owner: self(),
-      stun_servers: state.network_options[:stun_servers] || [],
-      turn_servers: state.network_options[:turn_servers] || [],
+      integrated_turn_options: state.network_options[:integrated_turn_options],
       handshake_opts: handshake_opts,
       log_metadata: [peer_id: peer.id]
     }
