@@ -1,4 +1,10 @@
 {
     "image": "membraneframeworklabs/docker_membrane",
-    "forwardPorts": [4000],
+    "appPort": [
+        "4000",
+        "50000-50019:50000-50019/udp"
+    ],
+    "containerEnv": {
+        "RUNNING_IN_DOCKER": "1"
+    }
 }

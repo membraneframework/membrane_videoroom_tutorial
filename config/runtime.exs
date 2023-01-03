@@ -32,7 +32,7 @@ end
 config :membrane_videoroom_demo,
   external_ip: System.get_env("EXTERNAL_IP", "127.0.0.1") |> ConfigParser.parse_external_ip(),
   port_range:
-    System.get_env("PORT_RANGE", "50000-59999")
+    System.get_env("PORT_RANGE", "50000-50019")
     |> ConfigParser.parse_port_range()
 
 config :membrane_videoroom_demo, VideoRoomWeb.Endpoint, [
